@@ -53,3 +53,30 @@ test("Unknown endpoint returns 404", async () => {
 
   assert.equal(status, 404);
 });
+
+
+test("Categories endpoint returns a list", async () => {
+  const { status, body } = await request("/categories");
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+});
+
+test("Brands endpoint returns a list", async () => {
+  const { status, body } = await request("/brands");
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+});
+
+test("Unknown category returns 404", async () => {
+  const { status } = await request("/categories/999999");
+
+  assert.equal(status, 404);
+});
+
+test("Unknown brand returns 404", async () => {
+  const { status } = await request("/brands/999999");
+
+  assert.equal(status, 404);
+});
