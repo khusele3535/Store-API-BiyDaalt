@@ -80,3 +80,43 @@ test("Unknown brand returns 404", async () => {
 
   assert.equal(status, 404);
 });
+
+
+test("Products are sorted by price descending", async () => {
+  const { status, body } = await request(
+    "/products?sort=price&order=desc&limit=10"
+  );
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body.data));
+
+  for (let i = 1; i < body.data.length; i++) {
+    assert.ok(body.data[i - 1].price >= body.data[i].price);
+  }
+});
+
+test("Products can be filtered by category", async () => {
+  const { status, body } = await request(
+    "/products?categoryId=1&limit=100"
+  );
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body.data));
+  assert.ok(body.data.every((product) => product.categoryId === 1));
+});
+
+test("Products can be filtered without brand", async () => {
+  const { status, body } = await request(
+    "/products?hasBrand=false&limit=100"
+  );
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body.data));
+  assert.ok(body.data.every((product) => product.brandId === null));
+});
+
+test("Unknown product returns 404", async () => {
+  const { status } = await request("/products/999999");
+
+  assert.equal(status, 404);
+});
