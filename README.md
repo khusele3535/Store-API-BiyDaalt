@@ -17,7 +17,7 @@ Store API нь дэлгүүрийн бараа бүтээгдэхүүн, анг�
 Үндсэн боломжууд:
 
 - Category, Brand, Product, Review CRUD үйлдлүүд
-- 21 REST API endpoint
+- 23 REST API endpoint
 - Бүтээгдэхүүн хайх, шүүх, эрэмбэлэх
 - Pagination болон metadata
 - Өгөгдөл шалгах (Validation)
@@ -414,7 +414,4 @@ Store API төсөл нь Node.js, Express.js, PostgreSQL, Prisma ORM ашигл
 
 **Боловсруулсан:** А. Хүсэлбаяр  
 **Оюутны код:** B24FM1002  
-**Хичээл:** BED411 — Backend хөгжилgit add README.md
-git commit -m "Document Store API setup endpoints and database relationships"
-git status
-git rev-list --count HEAD
+**Хичээл:** BED411 — Backend хөгжил
