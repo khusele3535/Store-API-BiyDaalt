@@ -147,3 +147,40 @@ test("Invalid review ID returns 400", async () => {
 
   assert.equal(status, 400);
 });
+
+
+test("Category products endpoint returns a list", async () => {
+  const { status, body } = await request(
+    "/categories/1/products"
+  );
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+  assert.ok(body.every((product) => product.categoryId === 1));
+});
+
+test("Brand products endpoint returns a list", async () => {
+  const { status, body } = await request(
+    "/brands/1/products"
+  );
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+  assert.ok(body.every((product) => product.brandId === 1));
+});
+
+test("Unknown category products returns 404", async () => {
+  const { status } = await request(
+    "/categories/999999/products"
+  );
+
+  assert.equal(status, 404);
+});
+
+test("Unknown brand products returns 404", async () => {
+  const { status } = await request(
+    "/brands/999999/products"
+  );
+
+  assert.equal(status, 404);
+});
