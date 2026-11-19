@@ -66,7 +66,7 @@ function validateProduct(body, partial = false) {
     }
   }
 
-  // Title
+  // Title validation
   if (!partial || "title" in body) {
     if (
       typeof body.title !== "string" ||
@@ -79,7 +79,7 @@ function validateProduct(body, partial = false) {
     }
   }
 
-  // Price
+  // Price validation
   if (!partial || "price" in body) {
     if (
       !Number.isSafeInteger(body.price) ||
@@ -92,7 +92,7 @@ function validateProduct(body, partial = false) {
     }
   }
 
-  // Stock
+  // Stock validation
   if (!partial || "stock" in body) {
     if (
       !Number.isSafeInteger(body.stock) ||
@@ -105,7 +105,7 @@ function validateProduct(body, partial = false) {
     }
   }
 
-  // Description
+  // Description validation
   if (
     "description" in body &&
     body.description !== null &&
@@ -117,7 +117,7 @@ function validateProduct(body, partial = false) {
     };
   }
 
-  // Availability
+  // Availability validation
   if (
     "isAvailable" in body &&
     typeof body.isAvailable !== "boolean"
@@ -128,7 +128,7 @@ function validateProduct(body, partial = false) {
     };
   }
 
-  // Category
+  // Category validation
   if (!partial || "categoryId" in body) {
     if (
       !Number.isSafeInteger(body.categoryId) ||
@@ -141,7 +141,7 @@ function validateProduct(body, partial = false) {
     }
   }
 
-  // Brand
+  // Brand validation
   if (
     "brandId" in body &&
     body.brandId !== null &&
@@ -158,6 +158,10 @@ function validateProduct(body, partial = false) {
 
   return null;
 }
+
+// ========================================
+// CHECK RELATIONS
+// ========================================
 
 async function checkRelations(body) {
   if ("categoryId" in body) {
@@ -216,6 +220,7 @@ exports.getProducts = async (req, res, next) => {
       "limit",
     ];
 
+    // Validate query parameters
     for (const key of Object.keys(query)) {
       if (!allowed.includes(key)) {
         return res.status(400).json({
@@ -306,7 +311,10 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
-    // Boolean filters
+    // ========================================
+    // BOOLEAN FILTERS (FIXED)
+    // ========================================
+
     for (const field of ["hasBrand", "isAvailable"]) {
       if (query[field] !== undefined) {
         if (!["true", "false"].includes(query[field])) {
@@ -319,13 +327,18 @@ exports.getProducts = async (req, res, next) => {
         const value = query[field] === "true";
 
         if (field === "hasBrand") {
-          where.brandId = value ? { not: null } : null;
+          if (value === false) {
+            where.brandId = null;
+          } else if (query.brandId === undefined) {
+            where.brandId = { not: null };
+          }
         } else {
           where.isAvailable = value;
         }
       }
     }
 
+    // Conflicting brand filters
     if (
       query.hasBrand === "false" &&
       query.brandId !== undefined
@@ -336,7 +349,10 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
-    // Sorting
+    // ========================================
+    // SORTING
+    // ========================================
+
     const allowedSort = [
       "id",
       "title",
@@ -362,7 +378,10 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
-    // Pagination
+    // ========================================
+    // PAGINATION
+    // ========================================
+
     const page =
       query.page === undefined
         ? 1
@@ -387,13 +406,16 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
-    if (!Number.isSafeInteger((page - 1) * limit)) {
+    const skip = (page - 1) * limit;
+
+    if (!Number.isSafeInteger(skip)) {
       return res.status(400).json({
         message: "Page is too large",
         field: "page",
       });
     }
 
+    // Database query
     const [total, products] = await prisma.$transaction([
       prisma.product.count({
         where,
@@ -404,7 +426,7 @@ exports.getProducts = async (req, res, next) => {
           { [sort]: order },
           ...(sort === "id" ? [] : [{ id: "asc" }]),
         ],
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         include: {
           category: true,
@@ -413,7 +435,7 @@ exports.getProducts = async (req, res, next) => {
       }),
     ]);
 
-    res.status(200).json({
+    return res.status(200).json({
       data: products,
       meta: {
         page,
@@ -457,7 +479,7 @@ exports.getProductById = async (req, res, next) => {
       });
     }
 
-    res.status(200).json(product);
+    return res.status(200).json(product);
   } catch (error) {
     next(error);
   }
@@ -502,7 +524,7 @@ exports.createProduct = async (req, res, next) => {
       data,
     });
 
-    res.status(201).json(product);
+    return res.status(201).json(product);
   } catch (error) {
     next(error);
   }
@@ -556,7 +578,7 @@ exports.updateProduct = async (req, res, next) => {
       data,
     });
 
-    res.status(200).json(product);
+    return res.status(200).json(product);
   } catch (error) {
     next(error);
   }
@@ -591,7 +613,7 @@ exports.deleteProduct = async (req, res, next) => {
       where: { id },
     });
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     next(error);
   }
