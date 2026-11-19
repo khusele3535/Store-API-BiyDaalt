@@ -7,6 +7,11 @@ const logger = require("./middleware/logger");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
+const categoriesRoutes = require("./routes/categories.routes");
+const brandsRoutes = require("./routes/brands.routes");
+const productsRoutes = require("./routes/products.routes");
+const reviewsRoutes = require("./routes/reviews.routes");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -22,7 +27,13 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Error middleware
+// API routes
+app.use("/categories", categoriesRoutes);
+app.use("/brands", brandsRoutes);
+app.use("/products", productsRoutes);
+app.use("/reviews", reviewsRoutes);
+
+// Error middleware (must be last)
 app.use(notFound);
 app.use(errorHandler);
 

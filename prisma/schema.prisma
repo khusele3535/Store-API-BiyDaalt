@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  products Product[]
+}
+
+model Brand {
+  id          Int      @id @default(autoincrement())
+  name        String
+  foundedYear Int?
+  createdAt   DateTime @default(now())
+
+  products Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  title       String
+  price       Int
+  stock       Int
+  description String?
+  isAvailable Boolean  @default(true)
+  categoryId  Int
+  brandId     Int?
+  createdAt   DateTime @default(now())
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand    Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  reviews  Review[]
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  rating     Int
+  comment    String?
+  authorName String
+  productId  Int
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, authorName])
+}
