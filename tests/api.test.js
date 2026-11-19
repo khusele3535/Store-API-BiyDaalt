@@ -120,3 +120,30 @@ test("Unknown product returns 404", async () => {
 
   assert.equal(status, 404);
 });
+
+
+test("Reviews endpoint returns a list", async () => {
+  const { status, body } = await request("/reviews");
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+});
+
+test("Unknown review returns 404", async () => {
+  const { status } = await request("/reviews/999999");
+
+  assert.equal(status, 404);
+});
+
+test("Product reviews endpoint returns a list", async () => {
+  const { status, body } = await request("/products/1/reviews");
+
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body));
+});
+
+test("Invalid review ID returns 400", async () => {
+  const { status } = await request("/reviews/abc");
+
+  assert.equal(status, 400);
+});
