@@ -1,0 +1,798 @@
+openapi: 3.0.3
+
+info:
+  title: Store API
+  version: 1.0.0
+  description: |
+    Store REST API built with Express, PostgreSQL and Prisma.
+    Supports Categories, Brands, Products and Reviews.
+    Includes search, filtering, sorting, pagination and
+    database relationship rules.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Categories
+  - name: Brands
+  - name: Products
+  - name: Reviews
+
+paths:
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    post:
+      tags: [Categories]
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /categories/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Categories]
+      summary: Get category by ID
+      responses:
+        "200":
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Categories]
+      summary: Update category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      description: Cannot delete a category that has products.
+      responses:
+        "204":
+          description: Category deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /categories/{id}/products:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Categories]
+      summary: Get products in category
+      responses:
+        "200":
+          description: Products belonging to category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /brands:
+    get:
+      tags: [Brands]
+      summary: Get all brands
+      responses:
+        "200":
+          description: Brand list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Brand"
+
+    post:
+      tags: [Brands]
+      summary: Create brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandCreate"
+      responses:
+        "201":
+          description: Brand created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /brands/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Brands]
+      summary: Get brand by ID
+      responses:
+        "200":
+          description: Brand found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Brands]
+      summary: Update brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandUpdate"
+      responses:
+        "200":
+          description: Brand updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Brands]
+      summary: Delete brand
+      description: |
+        Products are preserved. Their brandId becomes null (SetNull).
+      responses:
+        "204":
+          description: Brand deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /brands/{id}/products:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Brands]
+      summary: Get products belonging to brand
+      responses:
+        "200":
+          description: Brand products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Search, filter, sort and paginate products
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search title or description (case-insensitive)
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: brandId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: hasBrand
+          in: query
+          schema:
+            type: boolean
+          description: |
+            true = products with a brand.
+            false = products without a brand.
+            Cannot combine false with brandId.
+        - name: minPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: maxPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: isAvailable
+          in: query
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, title, price, stock, createdAt]
+            default: id
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProducts"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+    post:
+      tags: [Products]
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductCreate"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /products/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Products]
+      summary: Get product details
+      responses:
+        "200":
+          description: Product details including relations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Products]
+      summary: Update product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Products]
+      summary: Delete product
+      description: Related reviews are deleted automatically (Cascade).
+      responses:
+        "204":
+          description: Product and related reviews deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /products/{id}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Products]
+      summary: Get reviews for product
+      responses:
+        "200":
+          description: Product reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /reviews:
+    get:
+      tags: [Reviews]
+      summary: Get all reviews
+      responses:
+        "200":
+          description: Review list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewWithProduct"
+
+    post:
+      tags: [Reviews]
+      summary: Create review
+      description: One author can review each product only once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewCreate"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /reviews/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Reviews]
+      summary: Get review by ID
+      responses:
+        "200":
+          description: Review found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewWithProduct"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Reviews]
+      summary: Update review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewUpdate"
+      responses:
+        "200":
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    delete:
+      tags: [Reviews]
+      summary: Delete review
+      responses:
+        "204":
+          description: Review deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Conflict:
+      description: Conflict or duplicate record
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        field:
+          type: string
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CategoryInput:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+
+    Brand:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        foundedYear:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    BrandCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        foundedYear:
+          type: integer
+          nullable: true
+          minimum: 1800
+
+    BrandUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        foundedYear:
+          type: integer
+          nullable: true
+          minimum: 1800
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        price:
+          type: integer
+        stock:
+          type: integer
+        description:
+          type: string
+          nullable: true
+        isAvailable:
+          type: boolean
+        categoryId:
+          type: integer
+        brandId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ProductCreate:
+      type: object
+      required: [title, price, stock, categoryId]
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+        price:
+          type: integer
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          nullable: true
+        isAvailable:
+          type: boolean
+          default: true
+        categoryId:
+          type: integer
+          minimum: 1
+        brandId:
+          type: integer
+          nullable: true
+          minimum: 1
+
+    ProductUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+        price:
+          type: integer
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          nullable: true
+        isAvailable:
+          type: boolean
+        categoryId:
+          type: integer
+          minimum: 1
+        brandId:
+          type: integer
+          nullable: true
+          minimum: 1
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        authorName:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ReviewCreate:
+      type: object
+      required: [productId, authorName, rating]
+      additionalProperties: false
+      properties:
+        productId:
+          type: integer
+          minimum: 1
+        authorName:
+          type: string
+          minLength: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+
+    ReviewUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        productId:
+          type: integer
+          minimum: 1
+        authorName:
+          type: string
+          minLength: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+
+    ProductDetail:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            category:
+              $ref: "#/components/schemas/Category"
+            brand:
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/Brand"
+            reviews:
+              type: array
+              items:
+                $ref: "#/components/schemas/Review"
+
+    ReviewWithProduct:
+      allOf:
+        - $ref: "#/components/schemas/Review"
+        - type: object
+          properties:
+            product:
+              $ref: "#/components/schemas/Product"
+
+    PaginatedProducts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            pages:
+              type: integer
