@@ -415,3 +415,43 @@ Store API төсөл нь Node.js, Express.js, PostgreSQL, Prisma ORM ашигл
 **Боловсруулсан:** А. Хүсэлбаяр  
 **Оюутны код:** B24FM1002  
 **Хичээл:** BED411 — Backend хөгжил
+
+
+## Automated Testing
+
+The project includes automated API and Swagger tests using the
+built-in Node.js test runner.
+
+### Run tests
+
+Start the API server in the first terminal:
+
+```bash
+npm run dev
+```
+
+Run automated tests in a second terminal:
+
+```bash
+npm test
+```
+
+### Test coverage
+
+- Health endpoint
+- Pagination and query validation
+- Category and Brand endpoints
+- Product filtering and sorting
+- Review endpoints
+- Category, Brand and Product relationships
+- HTTP 400 and 404 responses
+- Swagger/OpenAPI documentation structure
+
+### Latest verified results
+
+- Total tests: 31
+- Passed: 31
+- Failed: 0
+
+Note: API tests require the server and PostgreSQL database
+to be running. Tests use the local API at http://localhost:3000.
