@@ -1549,7 +1549,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"productId\": 1,\r\n  \"authorName\": \"Postman Tester\",\r\n  \"rating\": 5,\r\n  \"comment\": \"Excellent product!\"\r\n}",
+              "raw": "{\r\n  \"productId\": 1,\r\n  \"authorName\": \"Postman Review Test 20261120\",\r\n  \"rating\": 5,\r\n  \"comment\": \"Excellent product!\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2061,11 +2061,28 @@
     },
     {
       "name": "GET Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Health Check returns 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Server status is ok\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json.status).to.eql(\"ok\");\r\n});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": ""
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
         }
       },
       "response": []

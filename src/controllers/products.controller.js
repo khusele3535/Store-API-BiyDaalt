@@ -399,9 +399,9 @@ exports.getProducts = async (req, res, next) => {
       });
     }
 
-    if (limit === null || limit > 100) {
+    if (limit === null || limit > 50) {
       return res.status(400).json({
-        message: "Limit must be between 1 and 100",
+        message: "Limit must be between 1 and 50",
         field: "limit",
       });
     }

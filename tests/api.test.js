@@ -33,7 +33,7 @@ test("Products pagination works", async () => {
 const invalidCases = [
   ["/products?page=0", "page"],
   ["/products?limit=0", "limit"],
-  ["/products?limit=101", "limit"],
+  ["/products?limit=100", "limit"],
   ["/products?minPrice=-100", "minPrice"],
   ["/products?sort=unknown", "sort"],
   ["/products?order=invalid", "order"],
@@ -97,7 +97,7 @@ test("Products are sorted by price descending", async () => {
 
 test("Products can be filtered by category", async () => {
   const { status, body } = await request(
-    "/products?categoryId=1&limit=100"
+    "/products?categoryId=1&limit=50"
   );
 
   assert.equal(status, 200);
@@ -107,7 +107,7 @@ test("Products can be filtered by category", async () => {
 
 test("Products can be filtered without brand", async () => {
   const { status, body } = await request(
-    "/products?hasBrand=false&limit=100"
+    "/products?hasBrand=false&limit=50"
   );
 
   assert.equal(status, 200);
@@ -183,4 +183,11 @@ test("Unknown brand products returns 404", async () => {
   );
 
   assert.equal(status, 404);
+});
+
+test("Limit 50 is accepted", async () => {
+  const { status, body } = await request("/products?limit=50");
+
+  assert.equal(status, 200);
+  assert.equal(body.meta.limit, 50);
 });
